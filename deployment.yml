@@ -1,0 +1,47 @@
+name: CI/CD Pipeline - Build and Push Docker Image to JFrog Artifactory
+ 
+on:
+  push:
+    branches:
+      - main  # Trigger workflow on push to the main branch
+  pull_request:
+    branches:
+      - main  # Optional: Trigger workflow on pull requests to the main branch
+ 
+env:
+  ARTIFACTORY_URL: your-artifactory-url  # Replace with your JFrog Artifactory URL
+  REPOSITORY_NAME: your-repo-name        # Replace with your repository name
+  IMAGE_NAME: your-image-name            # Replace with your Docker image name
+  IMAGE_TAG: latest                      # Replace with your desired tag or use dynamic tagging
+ 
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+ 
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+ 
+      # Log in to JFrog Artifactory
+      - name: Log in to JFrog Artifactory
+        run: |
+          echo "${{ secrets.ARTIFACTORY_PASSWORD }}" | docker login ${{ env.ARTIFACTORY_URL }} \
+            -u "${{ secrets.ARTIFACTORY_USERNAME }}" \
+            --password-stdin
+ 
+      # Build the Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ env.ARTIFACTORY_URL }}/${{ env.REPOSITORY_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} .
+ 
+      # Push the Docker image to JFrog Artifactory
+      - name: Push Docker image to JFrog Artifactory
+        run: |
+          docker push ${{ env.ARTIFACTORY_URL }}/${{ env.REPOSITORY_NAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+ 
+      # Optional: Log out of JFrog Artifactory
+      - name: Log out of JFrog Artifactory
+        run: |
+          docker logout ${{ env.ARTIFACTORY_URL }}
+ 
